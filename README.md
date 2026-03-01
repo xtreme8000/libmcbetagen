@@ -1,0 +1,1 @@
+A library to generate almost perfect Beta 1.7.3 terrain, ported from [BetrockServer](https://github.com/OfficialPixelBrush/BetrockServer) to C99.
