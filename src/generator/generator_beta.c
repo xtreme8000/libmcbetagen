@@ -183,8 +183,8 @@ static void generator_terrain_noise(struct generator* g, double* terrain,
 	}
 }
 
-void generator_terrain(struct generator* g, struct generator_chunk* c) {
-	assert(g);
+static void generator_terrain(struct generator* g, struct generator_chunk* c) {
+	assert(g && c);
 
 	// generate 4x16x4 low resolution noise map
 	generator_terrain_noise(g, g->terrain_field, c->x * 4, 0, c->z * 4,
@@ -303,22 +303,21 @@ void generator_terrain(struct generator* g, struct generator_chunk* c) {
 	}
 }
 
-uint8_t GetTopBlock(enum biome biome) {
-	if(biome == BIOME_DESERT || biome == BIOME_ICEDESERT) {
-		return BLOCK_SAND;
-	}
-	return BLOCK_GRASS;
+static uint8_t get_top_block(enum biome biome) {
+	return (biome == BIOME_DESERT || biome == BIOME_ICEDESERT) ? BLOCK_SAND :
+																 BLOCK_GRASS;
 }
 
-uint8_t GetFillerBlock(enum biome biome) {
-	if(biome == BIOME_DESERT || biome == BIOME_ICEDESERT) {
-		return BLOCK_SAND;
-	}
-	return BLOCK_DIRT;
+static uint8_t get_filler_block(enum biome biome) {
+	return (biome == BIOME_DESERT || biome == BIOME_ICEDESERT) ? BLOCK_SAND :
+																 BLOCK_DIRT;
 }
 
-void generator_replace_biome(struct generator* g, struct random_java* rand,
-							 struct generator_chunk* c) {
+static void generator_replace_biome(struct generator* g,
+									struct random_java* rand,
+									struct generator_chunk* c) {
+	assert(g && rand && c);
+
 	const double oneThirtySecond = 1.0 / 32.0;
 
 	noise_perlin_octaves_sample_field3d(&g->noise_sand, g->sand_field,
@@ -349,8 +348,8 @@ void generator_replace_biome(struct generator* g, struct random_java* rand,
 				+ 3.0 + random_java_next_double(rand) * 0.25;
 			int32_t stoneDepth = -1;
 			// Get biome-appropriate top and filler blocks
-			uint8_t topBlock = GetTopBlock(biome);
-			uint8_t fillerBlock = GetFillerBlock(biome);
+			uint8_t topBlock = get_top_block(biome);
+			uint8_t fillerBlock = get_filler_block(biome);
 
 			// Iterate over column top to bottom
 			for(int32_t y = CHUNK_HEIGHT - 1; y >= 0; y--) {
@@ -377,8 +376,8 @@ void generator_replace_biome(struct generator* g, struct random_java* rand,
 								  && y <= WATER_LEVEL + 1) {
 							// If we're close to the water level, apply gravel
 							// and sand
-							topBlock = GetTopBlock(biome);
-							fillerBlock = GetFillerBlock(biome);
+							topBlock = get_top_block(biome);
+							fillerBlock = get_filler_block(biome);
 
 							if(gravelActive) {
 								topBlock = BLOCK_AIR;
@@ -414,6 +413,8 @@ void generator_replace_biome(struct generator* g, struct random_java* rand,
 }
 
 void generator_sample(struct generator* g, struct generator_chunk* c) {
+	assert(g && c);
+
 	generator_biome_sample_field(&g->biome, c->x * CHUNK_WIDTH,
 								 c->z * CHUNK_WIDTH, CHUNK_WIDTH);
 	generator_terrain(g, c);
