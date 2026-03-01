@@ -16,3 +16,10 @@ add_library(mcbetagen STATIC
 target_compile_features(mcbetagen PUBLIC c_std_99)
 target_compile_options(mcbetagen PRIVATE -Wall -Wextra -pedantic)
 target_include_directories(mcbetagen PUBLIC src/)
+
+add_executable(test EXCLUDE_FROM_ALL
+    test/munit.c
+    test/main.c
+)
+target_include_directories(test PRIVATE test/)
+target_link_libraries(test PRIVATE mcbetagen m)
