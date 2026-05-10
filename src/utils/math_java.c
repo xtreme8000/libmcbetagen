@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include <utils/math_java.h>
+#include <math.h>
 
 double math_java_lerp(double t, double a, double b) {
 	return a + t * (b - a);
@@ -34,4 +36,44 @@ int32_t math_java_hash_code(const char* value) {
 
 int32_t math_java_abs(int32_t a) {
 	return (a < 0) ? -a : a;
+}
+
+int32_t math_java_cast_double_to_int32(double value) {
+	if (isnan(value))
+		return 0;
+	if (value > INT32_MAX)
+		return INT32_MAX;
+	if (value < INT32_MIN)
+		return INT32_MIN;
+	return (int32_t)value;
+}
+
+int32_t math_java_cast_float_to_int32(float value) {
+	if (isnan(value))
+		return 0;
+	if (value > INT32_MAX)
+		return INT32_MAX;
+	if (value < INT32_MIN)
+		return INT32_MIN;
+	return (int32_t)value;
+}
+
+int64_t math_java_cast_double_to_int64(double value) {
+	if (isnan(value))
+		return 0;
+	if (value > INT64_MAX)
+		return INT64_MAX;
+	if (value < INT64_MIN)
+		return INT64_MIN;
+	return (int64_t)value;
+}
+
+int64_t math_java_cast_float_to_int64(float value) {
+	if (isnan(value))
+		return 0;
+	if (value > INT64_MAX)
+		return INT64_MAX;
+	if (value < INT64_MIN)
+		return INT64_MIN;
+	return (int64_t)value;
 }

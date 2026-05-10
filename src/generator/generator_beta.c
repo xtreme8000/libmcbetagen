@@ -1,3 +1,4 @@
+#include "utils/math_java.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -344,8 +345,8 @@ static void generator_replace_biome(struct generator* g,
 			bool gravelActive = g->gravel_field[x + z * CHUNK_WIDTH]
 					+ random_java_next_double(rand) * 0.2
 				> 3.0;
-			int32_t stoneActive = g->stone_field[x + z * CHUNK_WIDTH] / 3.0
-				+ 3.0 + random_java_next_double(rand) * 0.25;
+			int32_t stoneActive = math_java_cast_double_to_int32(g->stone_field[x + z * CHUNK_WIDTH] / 3.0
+				+ 3.0 + random_java_next_double(rand) * 0.25);
 			int32_t stoneDepth = -1;
 			// Get biome-appropriate top and filler blocks
 			uint8_t topBlock = get_top_block(biome);

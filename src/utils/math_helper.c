@@ -26,12 +26,12 @@ float math_helper_sqrt_double(double x) {
 }
 
 int32_t math_helper_floor_float(float x) {
-	int32_t i = x;
+	int32_t i = math_java_cast_float_to_int32(x);
 	return x < (float)i ? i - 1 : i;
 }
 
 int32_t math_helper_floor_double(double x) {
-	int32_t i = x;
+	int32_t i = math_java_cast_double_to_int32(x);
 	return x < (double)i ? i - 1 : i;
 }
 

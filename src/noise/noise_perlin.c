@@ -35,9 +35,9 @@ double noise_perlin_sample(struct noise* np, double x, double y, double z) {
 	/* The farlands are caused by this getting cast to a 32-bit integer. Change
 	 * these int32_t to int64_t to fix the farlands, however this will change
 	 * beta tree generation slightly due to rounding differences. */
-	int32_t x_int = (int32_t)x;
-	int32_t y_int = (int32_t)y;
-	int32_t z_int = (int32_t)z;
+	int32_t x_int = math_java_cast_double_to_int32(x);
+	int32_t y_int = math_java_cast_double_to_int32(y);
+	int32_t z_int = math_java_cast_double_to_int32(z);
 
 	if(x < (double)x_int)
 		x_int--;
@@ -101,7 +101,7 @@ void noise_perlin_sample_field(struct noise* np, double* noise_field,
 	if(size_y == 1) {
 		for(size_t x = 0; x < size_x; x++) {
 			double fx = (offset_x + x) * scale_x + np->x_coord;
-			int32_t ix = fx;
+			int32_t ix = math_java_cast_double_to_int32(fx);
 			if(fx < ix)
 				ix--;
 			int32_t px = ix & 255;
@@ -110,7 +110,7 @@ void noise_perlin_sample_field(struct noise* np, double* noise_field,
 
 			for(size_t z = 0; z < size_z; z++) {
 				double fz = (offset_z + z) * scale_z + np->z_coord;
-				int32_t iz = fz;
+				int32_t iz = math_java_cast_double_to_int32(fz);
 				if(fz < iz)
 					iz--;
 				int32_t pz = iz & 255;
@@ -142,7 +142,7 @@ void noise_perlin_sample_field(struct noise* np, double* noise_field,
 
 		for(size_t x = 0; x < size_x; x++) {
 			double fx = (offset_x + x) * scale_x + np->x_coord;
-			int32_t ix = fx;
+			int32_t ix = math_java_cast_double_to_int32(fx);
 			if(fx < ix)
 				ix--;
 			int32_t px = ix & 255;
@@ -151,7 +151,7 @@ void noise_perlin_sample_field(struct noise* np, double* noise_field,
 
 			for(size_t z = 0; z < size_z; z++) {
 				double fz = (offset_z + z) * scale_z + np->z_coord;
-				int32_t iz = fz;
+				int32_t iz = math_java_cast_double_to_int32(fz);
 				if(fz < iz)
 					iz--;
 				int32_t pz = iz & 255;
@@ -160,7 +160,7 @@ void noise_perlin_sample_field(struct noise* np, double* noise_field,
 
 				for(size_t y = 0; y < size_y; y++) {
 					double fy = (offset_y + y) * scale_y + np->y_coord;
-					int32_t iy = fy;
+					int32_t iy = math_java_cast_double_to_int32(fy);
 					if(fy < iy)
 						iy--;
 					int32_t py = iy & 255;
