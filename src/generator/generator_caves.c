@@ -6,80 +6,85 @@
 #include <utils/math_java.h>
 #include <utils/random_java.h>
 
-#include <stdio.h>
-
 #define CARVE_EXTENT_LIMIT 8
 #define TUNNEL_LAVA_LEVEL 10
 
 static void carve_cave(struct generator_chunk* g, struct random_java* rand,
 					   double offset_x, double offset_y, double offset_z,
-					   float tunnelRadius, float carveYaw, float carvePitch,
-					   int32_t tunnelStep, int32_t tunnelLength,
-					   double verticalScale) {
-	double chunkCenterX = g->x * CHUNK_WIDTH + 8;
-	double chunkCenterZ = g->z * CHUNK_WIDTH + 8;
-	float var21 = 0.0F;
-	float var22 = 0.0F;
+					   float tunnel_radius, float carve_yaw, float carve_pitch,
+					   int32_t tunnel_step, int32_t tunnel_length,
+					   double vertical_scale) {
+	double chunk_center_x = g->x * CHUNK_WIDTH + CHUNK_WIDTH / 2;
+	double chunk_center_z = g->z * CHUNK_WIDTH + CHUNK_WIDTH / 2;
+	float pitch_vel = 0.0F;
+	float yaw_vel = 0.0F;
 	struct random_java rand2;
 	random_java_create(&rand2, random_java_next_long(rand));
 
-	if(tunnelLength <= 0) {
-		int32_t max_tunnel_length = CARVE_EXTENT_LIMIT * 16 - 16;
-		tunnelLength = max_tunnel_length
+	if(tunnel_length <= 0) {
+		int32_t max_tunnel_length
+			= CARVE_EXTENT_LIMIT * CHUNK_WIDTH - CHUNK_WIDTH;
+		tunnel_length = max_tunnel_length
 			- random_java_next_int_bound(&rand2, max_tunnel_length / 4);
 	}
 
-	bool branch_tunnel = tunnelStep == -1;
-	tunnelStep = branch_tunnel ? tunnelLength / 2 : tunnelStep;
+	bool branch_tunnel = tunnel_step == -1;
+	tunnel_step = branch_tunnel ? tunnel_length / 2 : tunnel_step;
 
-	int32_t var25 = random_java_next_int_bound(&rand2, tunnelLength / 2)
-		+ tunnelLength / 4;
+	int32_t branch_point = random_java_next_int_bound(&rand2, tunnel_length / 2)
+		+ tunnel_length / 4;
 
 	bool tunnel_steepness = random_java_next_int_bound(&rand2, 6) == 0;
-	while(tunnelStep < tunnelLength) {
+	while(tunnel_step < tunnel_length) {
 		double radius_xz = 1.5
-			+ (double)(math_helper_sin((float)tunnelStep * MATH_JAVA_PI_F
-									   / (float)tunnelLength)
-					   * tunnelRadius * 1.0F);
-		double radius_y = radius_xz * verticalScale;
-		offset_x += math_helper_cos(carveYaw) * math_helper_cos(carvePitch);
-		offset_y += math_helper_sin(carvePitch);
-		offset_z += math_helper_sin(carveYaw) * math_helper_cos(carvePitch);
-		carvePitch *= tunnel_steepness ? 0.92F : 0.7F;
-		carvePitch += var22 * 0.1F;
-		carveYaw += var21 * 0.1F;
-		var22 *= 0.9F;
-		var21 *= 12.0F / 16.0F;
-		var22
-			+= (random_java_next_float(&rand2) - random_java_next_float(&rand2))
-			* random_java_next_float(&rand2) * 2.0F;
-		var21
-			+= (random_java_next_float(&rand2) - random_java_next_float(&rand2))
-			* random_java_next_float(&rand2) * 4.0F;
-		if(!branch_tunnel && tunnelStep == var25 && tunnelRadius > 1.0F) {
+			+ (double)(math_helper_sin((float)tunnel_step * MATH_JAVA_PI_F
+									   / (float)tunnel_length)
+					   * tunnel_radius * 1.0F);
+		double radius_y = radius_xz * vertical_scale;
+		offset_x += math_helper_cos(carve_yaw) * math_helper_cos(carve_pitch);
+		offset_y += math_helper_sin(carve_pitch);
+		offset_z += math_helper_sin(carve_yaw) * math_helper_cos(carve_pitch);
+		carve_pitch *= tunnel_steepness ? 0.92F : 0.7F;
+		carve_pitch += yaw_vel * 0.1F;
+		carve_yaw += pitch_vel * 0.1F;
+		yaw_vel *= 0.9F;
+		pitch_vel *= 12.0F / 16.0F;
+
+		float t1 = random_java_next_float(&rand2);
+		float t2 = random_java_next_float(&rand2);
+		float t3 = random_java_next_float(&rand2);
+		yaw_vel += (t1 - t2) * t3 * 2.0F;
+
+		t1 = random_java_next_float(&rand2);
+		t2 = random_java_next_float(&rand2);
+		t3 = random_java_next_float(&rand2);
+		pitch_vel += (t1 - t2) * t3 * 4.0F;
+
+		if(!branch_tunnel && tunnel_step == branch_point
+		   && tunnel_radius > 1.0F) {
 			carve_cave(g, rand, offset_x, offset_y, offset_z,
 					   random_java_next_float(&rand2) * 0.5F + 0.5F,
-					   carveYaw - MATH_JAVA_PI_F * 0.5F, carvePitch / 3.0F,
-					   tunnelStep, tunnelLength, 1.0);
+					   carve_yaw - MATH_JAVA_PI_F * 0.5F, carve_pitch / 3.0F,
+					   tunnel_step, tunnel_length, 1.0);
 			carve_cave(g, rand, offset_x, offset_y, offset_z,
 					   random_java_next_float(&rand2) * 0.5F + 0.5F,
-					   carveYaw + MATH_JAVA_PI_F * 0.5F, carvePitch / 3.0F,
-					   tunnelStep, tunnelLength, 1.0);
+					   carve_yaw + MATH_JAVA_PI_F * 0.5F, carve_pitch / 3.0F,
+					   tunnel_step, tunnel_length, 1.0);
 			return;
 		}
 
 		if(branch_tunnel || random_java_next_int_bound(&rand2, 4) != 0) {
-			double var33 = offset_x - chunkCenterX;
-			double var35 = offset_z - chunkCenterZ;
-			double var37 = tunnelLength - tunnelStep;
-			double var39 = tunnelRadius + 2.0F + CHUNK_WIDTH;
-			if(var33 * var33 + var35 * var35 - var37 * var37 > var39 * var39)
+			double dx = offset_x - chunk_center_x;
+			double dz = offset_z - chunk_center_z;
+			double dist = tunnel_length - tunnel_step;
+			double limit = tunnel_radius + 2.0F + CHUNK_WIDTH;
+			if(dx * dx + dz * dz - dist * dist > limit * limit)
 				return;
 
-			if(offset_x >= chunkCenterX - CHUNK_WIDTH - radius_xz * 2.0
-			   && offset_z >= chunkCenterZ - CHUNK_WIDTH - radius_xz * 2.0
-			   && offset_x <= chunkCenterX + CHUNK_WIDTH + radius_xz * 2.0
-			   && offset_z <= chunkCenterZ + CHUNK_WIDTH + radius_xz * 2.0) {
+			if(offset_x >= chunk_center_x - CHUNK_WIDTH - radius_xz * 2.0
+			   && offset_z >= chunk_center_z - CHUNK_WIDTH - radius_xz * 2.0
+			   && offset_x <= chunk_center_x + CHUNK_WIDTH + radius_xz * 2.0
+			   && offset_z <= chunk_center_z + CHUNK_WIDTH + radius_xz * 2.0) {
 				int32_t xMin = math_helper_floor_double(offset_x - radius_xz)
 					- g->x * CHUNK_WIDTH - 1;
 				int32_t xMax = math_helper_floor_double(offset_x + radius_xz)
@@ -99,8 +104,8 @@ static void carve_cave(struct generator_chunk* g, struct random_java* rand,
 					xMax = CHUNK_WIDTH;
 				if(yMin < 1)
 					yMin = 1;
-				if(yMax > 120)
-					yMax = 120;
+				if(yMax > CHUNK_HEIGHT - CHUNK_WIDTH / 2)
+					yMax = CHUNK_HEIGHT - CHUNK_WIDTH / 2;
 				if(zMin < 0)
 					zMin = 0;
 				if(zMax > CHUNK_WIDTH)
@@ -194,7 +199,7 @@ static void carve_cave(struct generator_chunk* g, struct random_java* rand,
 				}
 			}
 		}
-		tunnelStep++;
+		tunnel_step++;
 	}
 }
 
@@ -227,14 +232,16 @@ static void generate_caves(struct generator_chunk* g, struct random_java* rand,
 		}
 
 		for(size_t i = 0; i < node_count; i++) {
-			float carveYaw
+			float carve_yaw
 				= random_java_next_float(rand) * MATH_JAVA_PI_F * 2.0F;
-			float carvePitch
+			float carve_pitch
 				= (random_java_next_float(rand) - 0.5F) * 2.0F / 8.0F;
-			float tunnelRadius = random_java_next_float(rand) * 2.0F
-				+ random_java_next_float(rand);
-			carve_cave(g, rand, offset_x, offset_y, offset_z, tunnelRadius,
-					   carveYaw, carvePitch, 0, 0, 1.0);
+
+			float t1 = random_java_next_float(rand);
+			float t2 = random_java_next_float(rand);
+			float tunnel_radius = t1 * 2.0F + t2;
+			carve_cave(g, rand, offset_x, offset_y, offset_z, tunnel_radius,
+					   carve_yaw, carve_pitch, 0, 0, 1.0);
 		}
 	}
 }
