@@ -2,7 +2,7 @@
 
 #include <utils/random_java.h>
 
-#define RANDOM_JAVA_MULT 0x5DEECE66D
+#define RANDOM_JAVA_MULT 0x5DEECE66DLL
 #define RANDOM_JAVA_ADDEND 0xB
 #define RANDOM_JAVA_MASK ((1LL << 48) - 1)
 
