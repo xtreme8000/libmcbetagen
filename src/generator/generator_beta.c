@@ -109,7 +109,10 @@ static void generator_terrain_noise(struct generator* g, double* terrain,
 				= g->biome.temperature[sample_x * CHUNK_WIDTH + sample_z];
 			double humi
 				= g->biome.humidity[sample_x * CHUNK_WIDTH + sample_z] * temp;
-			humi = 1.0 - (1.0 - humi) * humi * humi;
+			humi = 1.0 - humi;
+			humi *= humi;
+			humi *= humi;
+			humi = 1.0 - humi;
 
 			// apply contientalness
 			double continentalness
@@ -173,11 +176,10 @@ static void generator_terrain_noise(struct generator* g, double* terrain,
 					double height_edge_fade
 						= (double)((float)(iY + 4 - max_y) / 3.0F);
 					terrain_density = terrain_density * (1.0 - height_edge_fade)
-						+ -10.0 * height_edge_fade;
+						- 10.0 * height_edge_fade;
 				}
 
-				terrain[xyz_idx] = terrain_density;
-				xyz_idx++;
+				terrain[xyz_idx++] = terrain_density;
 			}
 		}
 	}
@@ -269,7 +271,7 @@ static void generator_terrain(struct generator* g, struct generator_chunk* c) {
 							double temp
 								= g->biome.temperature[(macroX * 4 + subX) * 16
 													   + macroZ * 4 + subZ];
-							int yLevel = macroY * 8 + subY;
+							int32_t yLevel = macroY * 8 + subY;
 							if(yLevel < WATER_LEVEL) {
 								if(temp < 0.5 && yLevel >= WATER_LEVEL - 1) {
 									blockType = BLOCK_ICE;
@@ -355,11 +357,11 @@ static void generator_replace_biome(struct generator* g,
 			for(int32_t y = CHUNK_HEIGHT - 1; y >= 0; y--) {
 				// place bedrock at bottom with some randomness
 				if(y <= random_java_next_int_bound(rand, 5)) {
-					c->set_block(c, x, y, z, BLOCK_BEDROCK);
+					c->set_block(c, z, y, x, BLOCK_BEDROCK);
 					continue;
 				}
 
-				uint8_t currentBlock = c->get_block(c, x, y, z);
+				uint8_t currentBlock = c->get_block(c, z, y, x);
 				// Ignore air
 				if(currentBlock == BLOCK_AIR) {
 					stoneDepth = -1;
@@ -395,12 +397,12 @@ static void generator_replace_biome(struct generator* g,
 							topBlock = BLOCK_WATER_STILL;
 
 						stoneDepth = stoneActive;
-						c->set_block(c, x, y, z,
+						c->set_block(c, z, y, x,
 									 y >= WATER_LEVEL - 1 ? topBlock :
 															fillerBlock);
 					} else if(stoneDepth > 0) {
 						stoneDepth--;
-						c->set_block(c, x, y, z, fillerBlock);
+						c->set_block(c, z, y, x, fillerBlock);
 						if(stoneDepth == 0 && fillerBlock == BLOCK_SAND) {
 							stoneDepth = random_java_next_int_bound(rand, 4);
 							fillerBlock = BLOCK_SANDSTONE;
