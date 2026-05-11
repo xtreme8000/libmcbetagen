@@ -1,3 +1,4 @@
+#include <generator/generator_beta.h>
 #include <generator/generator_biome.h>
 #include <munit.h>
 #include <noise/noise_perlin.h>
@@ -397,6 +398,101 @@ MunitResult test_biome_sample_field(const MunitParameter* params,
 	return MUNIT_OK;
 }
 
+static size_t rle_decode(const uint8_t* in, size_t in_len, uint8_t** out) {
+	if(!in || in_len <= 4 || !out)
+		return 0;
+
+	size_t s = (in[3] << 24) | (in[2] << 16) | (in[1] << 8) | in[0];
+	size_t i = 4, j = 0;
+
+	*out = malloc(s);
+
+	if(!out)
+		return 0;
+
+	while(i < in_len && j < s) {
+		size_t count = in[i++] + 1;
+		uint8_t value = in[i++];
+		for(size_t k = 0; k < count && j < s; k++)
+			(*out)[j++] = value;
+	}
+
+	return j;
+}
+
+static uint8_t get_block(struct generator_chunk* c, int32_t x, int32_t y,
+						 int32_t z) {
+	return ((uint8_t*)c->user)[(y * CHUNK_WIDTH + z) * CHUNK_WIDTH + x];
+}
+
+static void set_block_meta(struct generator_chunk* c, int32_t x, int32_t y,
+						   int32_t z, uint8_t type, uint8_t meta) {
+	((uint8_t*)c->user)[(y * CHUNK_WIDTH + z) * CHUNK_WIDTH + x] = type;
+}
+
+static void set_block(struct generator_chunk* c, int32_t x, int32_t y,
+					  int32_t z, uint8_t type) {
+	set_block_meta(c, x, y, z, type, 0);
+}
+
+MunitResult test_generator_sample(const MunitParameter* params,
+								  void* user_data) {
+	const size_t chunk_size = CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT;
+
+	FILE* f = fopen("terrain_404.dat", "rb");
+	munit_assert_ptr_not_null(f);
+	fseek(f, 0, SEEK_END);
+	size_t f_len = ftell(f);
+	uint8_t* f_data = malloc(f_len);
+	munit_assert_ptr_not_null(f_data);
+	fseek(f, 0, SEEK_SET);
+	size_t f_read = fread(f_data, 1, f_len, f);
+	munit_assert_size(f_read, ==, f_len);
+	fclose(f);
+
+	uint8_t* expected;
+	size_t expected_len = rle_decode(f_data, f_len, &expected);
+	munit_assert_size(expected_len, ==, 25 * chunk_size);
+	munit_assert_ptr_not_null(expected);
+
+	free(f_data);
+
+	math_helper_init();
+
+	struct generator g;
+	generator_create(&g, 404);
+
+	uint8_t* chunk = malloc(chunk_size);
+	munit_assert_ptr_not_null(chunk);
+
+	size_t idx = 0;
+
+	for(int32_t x = -2; x <= 2; x++) {
+		for(int32_t z = -2; z <= 2; z++) {
+			memset(chunk, 0, chunk_size);
+
+			generator_sample(&g,
+							 &(struct generator_chunk) {
+								 .user = chunk,
+								 .x = x,
+								 .z = z,
+								 .set_block = set_block,
+								 .set_block_meta = set_block_meta,
+								 .get_block = get_block,
+							 });
+
+			for(size_t k = 0; k < chunk_size; k++)
+				munit_assert_uint8(expected[idx++], ==, chunk[k]);
+		}
+	}
+
+	generator_destroy(&g);
+	free(expected);
+	free(chunk);
+
+	return MUNIT_OK;
+}
+
 const MunitSuite suite_tests = {
 	NULL,
 	NULL,
@@ -481,6 +577,17 @@ const MunitSuite suite_tests = {
 				{"lookup", test_biome_lookup, NULL, NULL,
 				 MUNIT_TEST_OPTION_NONE, NULL},
 				{"sample_field", test_biome_sample_field, NULL, NULL,
+				 MUNIT_TEST_OPTION_NONE, NULL},
+				{NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL},
+			},
+			NULL,
+			1,
+			MUNIT_SUITE_OPTION_NONE,
+		},
+		{
+			"generator/",
+			(MunitTest[]) {
+				{"sample", test_generator_sample, NULL, NULL,
 				 MUNIT_TEST_OPTION_NONE, NULL},
 				{NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL},
 			},
