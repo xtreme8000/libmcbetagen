@@ -41,4 +41,13 @@ int32_t math_java_hash_code(const char* value);
 
 int32_t math_java_abs(int32_t a);
 
+/**
+ * @brief Java-equivalent casting functions
+ * 
+ */
+int32_t math_java_cast_double_to_int32(double value);
+int32_t math_java_cast_float_to_int32(float value);
+int64_t math_java_cast_double_to_int64(double value);
+int64_t math_java_cast_float_to_int64(float value);
+
 #endif
